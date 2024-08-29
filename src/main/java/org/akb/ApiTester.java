@@ -1,3 +1,6 @@
+//
+// Created by A. Kevin Bailey on 8/10/2024 under a GPL3.0 license
+//
 package org.akb;
 
 import javax.net.ssl.*;
@@ -70,7 +73,7 @@ public class ApiTester {
         System.out.println("  -sleepTime [value]      - Sleep time in milliseconds between calls within a thread. Default is 0.");
         System.out.println("  -requestTimeOut [value] - HTTP request timeout in milliseconds. Default is 10000.");
         System.out.println("  -connectTimeOut [value] - HTTP request timeout in milliseconds. Default is 20000.");
-        System.out.println("  -reuseConnects          - Add the request 'Connection: keep-alive' header.");
+        System.out.println("  -reuseConnects          - Attempts to reuse the connections if the server allows it.");
         System.out.println("Help:");
         System.out.println("  -? or --help - Display this help message.");
     }
@@ -254,12 +257,8 @@ public class ApiTester {
                             public X509Certificate[] getAcceptedIssuers() {
                                 return null;
                             }
-
-                            public void checkClientTrusted(X509Certificate[] certs, String authType) {
-                            }
-
-                            public void checkServerTrusted(X509Certificate[] certs, String authType) {
-                            }
+                            public void checkClientTrusted(X509Certificate[] certs, String authType) {}
+                            public void checkServerTrusted(X509Certificate[] certs, String authType) {}
                         }
                 };
 
@@ -290,11 +289,10 @@ public class ApiTester {
         List<Double> allResponseTimes = new ArrayList<>();
 
         Instant startTime = Instant.now();
-        for (int i = 1; i <= numThreads; i++) {
-            final int numCalls = (i == numThreads) ? (callsPerThread + remainderCalls) : callsPerThread;
-
-            executor.execute(new FetchData(httpClient,allResponseTimes, url, sleepTime, requestTimeOut, reuseConnects,
-                    i, numCalls));
+        for (int i = 0; i <= numThreads; i++) {
+            // Add one call to each thread number that is less than the mod of the total calls to compensate for the remainder
+            final int numCalls = (i < remainderCalls) ? (callsPerThread + 1) : callsPerThread;
+            executor.execute(new FetchData(httpClient,allResponseTimes, url, sleepTime, requestTimeOut, reuseConnects, i, numCalls));
         }
 
         // Shutdown the executor and wait for all tasks to finish
@@ -314,6 +312,7 @@ public class ApiTester {
         }
         double averageResponseTime = totalResponseTime / allResponseTimes.size();
 
+        System.out.printf("Total thread count: %d\n", numThreads);
         System.out.printf("Total test time: %.2f s\n", totalTime);
         System.out.printf("Average response time: %.2f ms\n", averageResponseTime);
         System.out.printf("Average requests per second: %.2f\n", requestsPerSecond);
