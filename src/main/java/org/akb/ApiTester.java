@@ -75,7 +75,7 @@ public class ApiTester {
         System.out.println("  -connectTimeOut [value] - HTTP request timeout in milliseconds. Default is 20000.");
         System.out.println("  -reuseConnects          - Attempts to reuse the connections if the server allows it.");
         System.out.println("Help:");
-        System.out.println("  -? or --help - Display this help message.");
+        System.out.println("  -? or --help            - Display this help message.");
     }
 
     // Method to measure latency for a number of HTTP GET requests
